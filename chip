@@ -1,0 +1,57 @@
+#!/usr/bin/env python
+import re
+import sys
+
+
+def getParameters(fileData):
+    chipMatches = re.findall('{{\s*([A-Za-z]+)\s*}}', fileData)
+    chipParameters = set(chipMatches)
+    return chipParameters
+
+
+def getValuesForParameters(parameters):
+    parameterValues = {parameter: input(
+        '{}: '.format(parameter)) for parameter in parameters}
+
+    return parameterValues
+
+
+def replaceTemplateValues(fileData, parameters):
+    for parameter, value in parameters.items():
+        fileData = re.sub(
+            r'{{{{\s*{}\s*}}}}'.format(parameter), value, fileData)
+
+    return fileData
+
+
+def processTemplateLocation(path):
+    template = None
+    with open(path, 'r') as file:
+        template = file.read()
+    return template
+
+
+def main():
+    print("***********************************************************************")
+    print("*                                                                     *")
+    print("*                    CHIP - A FILE COOKIE CUTTER                      *")
+    print("*                                                                     *")
+    print("***********************************************************************")
+
+    if len(sys.argv) != 2:
+        print("Error: Path to template must be specified\n")
+        return
+
+    fileData = processTemplateLocation(sys.argv[1])
+    fileName = input("Where should we put the file?: ")
+    print("Template Values: \n")
+    parameters = getParameters(fileData)
+    parameterValues = getValuesForParameters(parameters)
+    transformedFile = replaceTemplateValues(fileData, parameterValues)
+
+    with open('./{}'.format(fileName), 'w') as f:
+        f.write(transformedFile)
+    print("\nGenerated {}".format(fileName))
+
+
+main()
