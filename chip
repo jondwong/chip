@@ -2,24 +2,58 @@
 import re
 import sys
 
+PLACEHOLDER_MODIFIERS = {
+    'lower': lambda x: x.lower(),
+    'upper': lambda x: x.upper(),
+    'capitalize': lambda x: x.capitalize()
+}
 
-def getParameters(fileData):
-    chipMatches = re.findall('{{\s*([A-Za-z]+)\s*}}', fileData)
+
+def getTemplatePlaceholderTerms(fileData):
+    chipMatches = re.findall(r'{{\s*([A-Za-z\.]+)\s*}}', fileData)
     chipParameters = set(chipMatches)
     return chipParameters
 
 
-def getValuesForParameters(parameters):
-    parameterValues = {parameter: input(
-        '{}: '.format(parameter)) for parameter in parameters}
+def processPlaceholders(placeholderTerms):
+    placeholders = {}
 
-    return parameterValues
+    for placeholderTerm in placeholderTerms:
+        modifiedPieces = placeholderTerm.split(".")
+        basePlaceholder = None
+        modifier = None
+        if len(modifiedPieces) == 2:
+            basePlaceholder, modifier = modifiedPieces
+        else:
+            basePlaceholder = placeholderTerm
+
+        if basePlaceholder not in placeholders.keys():
+            placeholders[basePlaceholder] = {
+                "value": input("{}: ".format(basePlaceholder)),
+                "modifiers": set([])
+            }
+
+        if modifier:
+            placeholders[basePlaceholder]['modifiers'].add(modifier)
+
+    return placeholders
 
 
-def replaceTemplateValues(fileData, parameters):
-    for parameter, value in parameters.items():
+def replaceTemplatePlaceholders(fileData, placeholders):
+    for placeholder, placeholderInfo in placeholders.items():
+        print(placeholderInfo)
         fileData = re.sub(
-            r'{{{{\s*{}\s*}}}}'.format(parameter), value, fileData)
+            r'{{{{\s*{}\s*}}}}'.format(placeholder), placeholderInfo['value'], fileData)
+        for modifier in placeholderInfo['modifiers']:
+            cleanModifier = modifier.lower()
+            if cleanModifier in PLACEHOLDER_MODIFIERS.keys():
+                fileData = re.sub(
+                    r'{{{{\s*{}.{}\s*}}}}'.format(
+                        placeholder,
+                        modifier),
+                    PLACEHOLDER_MODIFIERS[cleanModifier](
+                        placeholderInfo['value']),
+                    fileData)
 
     return fileData
 
@@ -45,9 +79,9 @@ def main():
     fileData = processTemplateLocation(sys.argv[1])
     fileName = input("Where should we put the file?: ")
     print("Template Values: \n")
-    parameters = getParameters(fileData)
-    parameterValues = getValuesForParameters(parameters)
-    transformedFile = replaceTemplateValues(fileData, parameterValues)
+    placeholderTerms = getTemplatePlaceholderTerms(fileData)
+    placeholders = processPlaceholders(placeholderTerms)
+    transformedFile = replaceTemplatePlaceholders(fileData, placeholders)
 
     with open('./{}'.format(fileName), 'w') as f:
         f.write(transformedFile)
