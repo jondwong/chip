@@ -20,6 +20,14 @@ class {{ CLASSNAME }} {
 ```
 
 Then, you will be asked for the value for CLASSNAME, NAME, AGE
+
+### Modifiers
+
+In templates you can specify a modifier:
+* lower - `{{ PLACEHOLDER.lower }}` - value entered for `PLACEHOLDER` **lowercased**
+* upper - `{{ PLACEHOLDER.upper }}` - value entered for `PLACEHOLDER` **uppercased**
+* capitalize - `{{ PLACEHOLDER.capitalize }}` - value entered for `PLACEHOLDER` **capitalized**
+
 ## Installation
 
 `sudo make install` will install this into `/usr/local/bin` which should already be in your PATH.
